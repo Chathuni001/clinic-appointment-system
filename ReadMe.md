@@ -36,3 +36,13 @@
             }
         -> Enter npm install -D ts-node
         -> Enter npx prisma db seed
+
+#  Creating the API
+    1. Create a Prisma Service
+        nest generate module prisma
+        nest generate service prisma
+    2. Configure the Prisma Service (backend/src/prisma/prisma.service.ts, backend/src/prisma/prisma.module.ts)
+    3. Create Module API
+        nest generate module <module_name>
+        nest generate controller <module_name>
+        nest generate service <module_name>
