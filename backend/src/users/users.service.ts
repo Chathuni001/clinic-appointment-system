@@ -12,8 +12,14 @@ export class UsersService {
             id: true,
             name: true,
             username: true,
-            role: true,
+            roleId: true,
             image: true,
+
+            role: {
+                select: {
+                  name: true,
+                },
+            },
           },
         });
     }
@@ -25,8 +31,14 @@ export class UsersService {
             id: true,
             name: true,
             username: true,
-            role: true,
+            roleId: true,
             image: true,
+
+            role: {
+                select: {
+                  name: true,
+                },
+            },
         },
       });
     }

@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,17 +7,51 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        Int       @id @default(autoincrement())
-  name      String
-  username  String    @unique
-  password  String
-  role      String    @default("ADMIN")
-  image     String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+/////////////////////////////////////////////////////
+// ROLE MODEL
+/////////////////////////////////////////////////////
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   deletedAt DateTime?
 
+  // Audit fields
+  createdById Int?
+  updatedById Int?
+  deletedById Int?
+
+  createdBy User? @relation("RoleCreatedBy", fields: [createdById], references: [id])
+  updatedBy User? @relation("RoleUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy User? @relation("RoleDeletedBy", fields: [deletedById], references: [id])
+
+  // Users in this role
+  users User[]
+}
+
+/////////////////////////////////////////////////////
+// USER MODEL
+/////////////////////////////////////////////////////
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  username  String   @unique
+  password  String
+  image     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  // Role relation 
+  roleId Int?
+  role   Role? @relation(fields: [roleId], references: [id])
+
+  // Audit fields (self relation)
   createdById Int?
   updatedById Int?
   deletedById Int?
@@ -34,21 +63,34 @@ model User {
   createdUsers User[] @relation("UserCreatedBy")
   updatedUsers User[] @relation("UserUpdatedBy")
   deletedUsers User[] @relation("UserDeletedBy")
+
+  // Role audit reverse relations
+  createdRoles Role[] @relation("RoleCreatedBy")
+  updatedRoles Role[] @relation("RoleUpdatedBy")
+  deletedRoles Role[] @relation("RoleDeletedBy")
 }
 
-// Our Doctor Table
+/////////////////////////////////////////////////////
+// DOCTOR MODEL
+/////////////////////////////////////////////////////
+
 model Doctor {
   id           Int           @id @default(autoincrement())
   name         String
   specialty    String
+
   appointments Appointment[]
 }
 
-// Our Appointment Table
+/////////////////////////////////////////////////////
+// APPOINTMENT MODEL
+/////////////////////////////////////////////////////
+
 model Appointment {
   id          Int      @id @default(autoincrement())
   patientName String
   date        DateTime
+
   doctorId    Int
   doctor      Doctor   @relation(fields: [doctorId], references: [id])
 }

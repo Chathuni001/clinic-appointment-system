@@ -10,9 +10,15 @@ async function main() {
 
   // Truncate existing rows
   await prisma.$executeRawUnsafe(`
-    TRUNCATE TABLE "User", "Doctor"
+    TRUNCATE TABLE "Role", "User", "Doctor"
     RESTART IDENTITY CASCADE;
   `);
+
+  const role = await prisma.role.create({
+    data: {
+      name: 'SYSTEM ADMINISTRATOR'
+    }
+  });
 
   const hashedPassword = await bcrypt.hash('admin123', 10);
 
@@ -21,7 +27,7 @@ async function main() {
       name: 'System Administrator',
       username: 'admin',
       password: hashedPassword,
-      role: 'SYSTEM ADMINISTRATOR',
+      roleId: role.id,
     },
   });
 
