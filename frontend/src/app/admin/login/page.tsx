@@ -3,22 +3,48 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false); 
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    // For now, we will just log the attempt. 
-    // We will connect this to the NestJS Backend in the next step.
-    console.log("Logging in with:", { username, password });
-    
-    if (!username || !password) {
-      setError("Please fill in all fields");
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    try {
+      const response = await fetch(`${apiUrl}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      // 1. Success! Save the "VIP Pass" (Token) in the browser
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      // 2. Redirect to the Admin Dashboard
+      router.push("/admin/dashboard");
+      
+    } catch (err: any) {
+      setError(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -38,7 +64,7 @@ export default function LoginPage() {
             </span>
           </Link>
 
-          <p className="text-slate-500">Enter your credentials to manage the clinic</p>
+          {/* <p className="text-slate-500">Enter your credentials to manage the clinic</p> */}
         </div>
 
         {/* Login Card */}
@@ -78,9 +104,10 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full bg-[#093461] text-white py-4 rounded-2xl font-bold text-lg hover:bg-[#289276] transition-all shadow-lg shadow-blue-100 active:scale-[0.98]"
+              disabled={loading}
+              className="w-full bg-[#093461] text-white py-4 rounded-2xl font-bold text-lg hover:bg-[#289276] transition-all shadow-lg shadow-blue-100 active:scale-[0.98] disabled:opacity-50"
             >
-              Sign In
+              {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
         </div>

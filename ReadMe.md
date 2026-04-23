@@ -50,3 +50,13 @@
 # Install Security Tools (Password bcrypt)
     npm install bcrypt
     npm install -D @types/bcrypt
+
+
+# Install Auth Dependencies
+    npm install @nestjs/jwt passport-jwt
+    npm install -D @types/passport-jwt
+
+# Create the Auth Module
+    nest generate module auth
+    nest generate service auth
+    nest generate controller auth

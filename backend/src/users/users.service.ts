@@ -42,4 +42,10 @@ export class UsersService {
         },
       });
     }
+
+    async findOneToLogin(username: string) {
+      return this.prisma.user.findUnique({
+        where: { username },
+      });
+    }
   }
