@@ -46,3 +46,7 @@
         nest generate module <module_name>
         nest generate controller <module_name>
         nest generate service <module_name>
+
+# Install Security Tools (Password bcrypt)
+    npm install bcrypt
+    npm install -D @types/bcrypt

@@ -12,6 +12,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  username  String    @unique
+  password  String
+  role      String    @default("ADMIN")
+  image     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById Int?
+  updatedById Int?
+  deletedById Int?
+
+  createdBy User? @relation("UserCreatedBy", fields: [createdById], references: [id])
+  updatedBy User? @relation("UserUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy User? @relation("UserDeletedBy", fields: [deletedById], references: [id])
+
+  createdUsers User[] @relation("UserCreatedBy")
+  updatedUsers User[] @relation("UserUpdatedBy")
+  deletedUsers User[] @relation("UserDeletedBy")
+}
+
 // Our Doctor Table
 model Doctor {
   id           Int           @id @default(autoincrement())

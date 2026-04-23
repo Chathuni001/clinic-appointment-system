@@ -1,10 +1,29 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // This will delete existing doctors so we don't get duplicates
-  await prisma.doctor.deleteMany();
+  // Delete existing rows
+  // await prisma.user.deleteMany();
+  // await prisma.doctor.deleteMany();
+
+  // Truncate existing rows
+  await prisma.$executeRawUnsafe(`
+    TRUNCATE TABLE "User", "Doctor"
+    RESTART IDENTITY CASCADE;
+  `);
+
+  const hashedPassword = await bcrypt.hash('admin123', 10);
+
+  await prisma.user.create({
+    data: {
+      name: 'System Administrator',
+      username: 'admin',
+      password: hashedPassword,
+      role: 'SYSTEM ADMINISTRATOR',
+    },
+  });
 
   // Create 3 doctors
   await prisma.doctor.createMany({
