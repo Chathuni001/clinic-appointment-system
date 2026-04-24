@@ -33,10 +33,15 @@ export class AuthService {
     return {
       access_token: await this.jwtService.signAsync(payload),
       user: {
+        id: user.id,
         name: user.name,
-        // Since your UsersService shows a 'role' relation now:
-        role: user.roleId 
-      }
+        image: user.image,
+        roleId: user.roleId,
+  
+        role: {
+          name: user.role?.name,
+        },
+      },
     };
-  }
+  } 
 }

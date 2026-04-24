@@ -46,6 +46,21 @@ export class UsersService {
     async findOneToLogin(username: string) {
       return this.prisma.user.findUnique({
         where: { username },
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          password: true,
+          roleId: true,
+          image: true,
+    
+          role: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
       });
     }
   }
