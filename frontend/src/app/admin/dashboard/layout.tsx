@@ -47,7 +47,7 @@ export default function DashboardLayout({
   const menuItems = [
     { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Appointments", path: "", icon: Calendar },
-    { name: "Doctors", path: "", icon: Stethoscope },
+    { name: "Doctors", path: "/admin/dashboard/doctors", icon: Stethoscope },
     { name: "Patients", path: "", icon: HeartPulse },
     { name: "Users", path: "", icon: Users },
     {
