@@ -4,25 +4,23 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  // Delete existing rows
-  // await prisma.user.deleteMany();
-  // await prisma.doctor.deleteMany();
-
-  // Truncate existing rows
+  console.log('Cleaning up database...');
+  // Note: Using the exact model names from your schema
   await prisma.$executeRawUnsafe(`
-    TRUNCATE TABLE "Role", "User", "Doctor"
+    TRUNCATE TABLE "Role", "User", "Doctor", "Specialty", "Appointment"
     RESTART IDENTITY CASCADE;
   `);
 
+  // 1. Create System Admin Role
   const role = await prisma.role.create({
     data: {
       name: 'SYSTEM ADMINISTRATOR'
     }
   });
 
+  // 2. Create Admin User
   const hashedPassword = await bcrypt.hash('admin123', 10);
-
-  await prisma.user.create({
+  const admin = await prisma.user.create({
     data: {
       name: 'System Administrator',
       username: 'admin',
@@ -31,12 +29,32 @@ async function main() {
     },
   });
 
-  // Create 3 doctors
+  // 3. Create Specialities
+  // We create them individually or capture the IDs to link them to doctors
+  const cardio = await prisma.specialty.create({ data: { name: 'Cardiologist', createdById: admin.id } });
+  const derm = await prisma.specialty.create({ data: { name: 'Dermatologist', createdById: admin.id } });
+  const pedia = await prisma.specialty.create({ data: { name: 'Pediatrician', createdById: admin.id } });
+  const neuro = await prisma.specialty.create({ data: { name: 'Neurologist', createdById: admin.id } });
+
+  // 4. Create Doctors
+  // Now we use the specific IDs from the specialities created above
   await prisma.doctor.createMany({
     data: [
-      { name: 'Dr. Sarah Johnson', specialty: 'Cardiologist' },
-      { name: 'Dr. Michael Chen', specialty: 'Dermatologist' },
-      { name: 'Dr. Emily Williams', specialty: 'Pediatrician' },
+      { 
+        name: 'Dr. Sarah Johnson', 
+        specialtyId: cardio.id, 
+        createdById: admin.id 
+      },
+      { 
+        name: 'Dr. Michael Chen', 
+        specialtyId: neuro.id, 
+        createdById: admin.id 
+      },
+      { 
+        name: 'Dr. Emily Williams', 
+        specialtyId: pedia.id, 
+        createdById: admin.id 
+      },
     ],
   });
 

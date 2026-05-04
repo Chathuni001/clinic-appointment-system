@@ -5,32 +5,44 @@ import { PrismaService } from '../prisma/prisma.service';
 export class DoctorsService {
   constructor(private prisma: PrismaService) {}
 
+  // Only get doctors where deletedAt is NULL
   findAll() {
-    return this.prisma.doctor.findMany();
-  }
-
-  findOne(id: number) {
-    return this.prisma.doctor.findUnique({
-      where: { id },
+    return this.prisma.doctor.findMany({
+      where: { deletedAt: null },
+      include: { specialty: true },
     });
   }
 
-  create(data: { name: string; specialty: string }) {
+  // Create with createdById
+  async create(data: { name: string; specialtyId: number; createdById: number }) {
     return this.prisma.doctor.create({
-      data,
+      data: {
+        name: data.name,
+        specialtyId: data.specialtyId,
+        createdById: data.createdById, // Audit field
+      },
     });
   }
 
-  update(id: number, data: { name?: string; specialty?: string }) {
+  async update(id: number, data: { name: string; specialtyId: number; updatedById: number }) {
     return this.prisma.doctor.update({
       where: { id },
-      data,
+      data: {
+        name: data.name,
+        specialtyId: data.specialtyId,
+        updatedById: data.updatedById, // Audit field
+      },
     });
   }
-
-  remove(id: number) {
-    return this.prisma.doctor.delete({
+  
+  // Soft Delete: Set deletedAt and deletedById
+  async remove(id: number, deletedById: number) {
+    return this.prisma.doctor.update({
       where: { id },
+      data: {
+        deletedAt: new Date(),
+        deletedById: deletedById,
+      },
     });
   }
 }

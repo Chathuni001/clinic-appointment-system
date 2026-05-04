@@ -10,13 +10,11 @@ datasource db {
 /////////////////////////////////////////////////////
 // ROLE MODEL
 /////////////////////////////////////////////////////
-
 model Role {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   // Audit fields
@@ -35,23 +33,21 @@ model Role {
 /////////////////////////////////////////////////////
 // USER MODEL
 /////////////////////////////////////////////////////
-
 model User {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   name      String
-  username  String   @unique
+  username  String    @unique
   password  String
   image     String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   // Role relation 
   roleId Int?
   role   Role? @relation(fields: [roleId], references: [id])
 
-  // Audit fields (self relation)
+  // Audit fields (Self-relations)
   createdById Int?
   updatedById Int?
   deletedById Int?
@@ -60,37 +56,103 @@ model User {
   updatedBy User? @relation("UserUpdatedBy", fields: [updatedById], references: [id])
   deletedBy User? @relation("UserDeletedBy", fields: [deletedById], references: [id])
 
+  // Reverse relations for User auditing
   createdUsers User[] @relation("UserCreatedBy")
   updatedUsers User[] @relation("UserUpdatedBy")
   deletedUsers User[] @relation("UserDeletedBy")
 
-  // Role audit reverse relations
+  // Reverse relations for Role auditing
   createdRoles Role[] @relation("RoleCreatedBy")
   updatedRoles Role[] @relation("RoleUpdatedBy")
   deletedRoles Role[] @relation("RoleDeletedBy")
+
+  // Reverse relations for Doctor auditing (Fixed Typos)
+  createdDoctors Doctor[] @relation("DoctorCreatedBy")
+  updatedDoctors Doctor[] @relation("DoctorUpdatedBy")
+  deletedDoctors Doctor[] @relation("DoctorDeletedBy")
+
+  // Reverse relations for Specialty auditing
+  createdSpecialities Specialty[] @relation("SpecialtyCreatedBy")
+  updatedSpecialities Specialty[] @relation("SpecialtyUpdatedBy")
+  deletedSpecialities Specialty[] @relation("SpecialtyDeletedBy")
+
+  // Reverse relations for Appointment auditing
+  createdAppointments Appointment[] @relation("AppointmentCreatedBy")
+  updatedAppointments Appointment[] @relation("AppointmentUpdatedBy")
+  deletedAppointments Appointment[] @relation("AppointmentDeletedBy")
 }
 
 /////////////////////////////////////////////////////
 // DOCTOR MODEL
 /////////////////////////////////////////////////////
-
 model Doctor {
-  id           Int           @id @default(autoincrement())
-  name         String
-  specialty    String
+  id          Int         @id @default(autoincrement())
+  name        String
+  image       String?
+  specialtyId Int?
+  specialty   Specialty? @relation(fields: [specialtyId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Audit fields
+  createdById Int?
+  updatedById Int?
+  deletedById Int?
+
+  createdBy User? @relation("DoctorCreatedBy", fields: [createdById], references: [id])
+  updatedBy User? @relation("DoctorUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy User? @relation("DoctorDeletedBy", fields: [deletedById], references: [id])
 
   appointments Appointment[]
 }
 
 /////////////////////////////////////////////////////
+// Specialty MODEL
+/////////////////////////////////////////////////////
+model Specialty {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Audit fields
+  createdById Int?
+  updatedById Int?
+  deletedById Int?
+
+  createdBy User? @relation("SpecialtyCreatedBy", fields: [createdById], references: [id])
+  updatedBy User? @relation("SpecialtyUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy User? @relation("SpecialtyDeletedBy", fields: [deletedById], references: [id])
+
+  // Relation back to doctors
+  doctors Doctor[]
+}
+
+/////////////////////////////////////////////////////
 // APPOINTMENT MODEL
 /////////////////////////////////////////////////////
-
 model Appointment {
   id          Int      @id @default(autoincrement())
   patientName String
   date        DateTime
 
-  doctorId    Int
-  doctor      Doctor   @relation(fields: [doctorId], references: [id])
+  doctorId Int
+  doctor   Doctor @relation(fields: [doctorId], references: [id])
+
+  // Added Audit fields to match your design pattern
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById Int?
+  updatedById Int?
+  deletedById Int?
+
+  createdBy User? @relation("AppointmentCreatedBy", fields: [createdById], references: [id])
+  updatedBy User? @relation("AppointmentUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy User? @relation("AppointmentDeletedBy", fields: [deletedById], references: [id])
 }

@@ -19,26 +19,24 @@ export class DoctorsController {
     return this.doctorsService.findAll();
   }
 
-  @Get(':id')
-  getDoctor(@Param('id', ParseIntPipe) id: number) {
-    return this.doctorsService.findOne(id);
-  }
-
   @Post()
-  createDoctor(@Body() body: { name: string; specialty: string }) {
+  create(@Body() body: { name: string; specialtyId: number; createdById: number }) {
     return this.doctorsService.create(body);
   }
 
   @Put(':id')
-  updateDoctor(
+  update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: { name?: string; specialty?: string },
+    @Body() body: { name: string; specialtyId: number; updatedById: number },
   ) {
     return this.doctorsService.update(id, body);
   }
 
   @Delete(':id')
-  deleteDoctor(@Param('id', ParseIntPipe) id: number) {
-    return this.doctorsService.remove(id);
+  delete(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { deletedById: number },
+  ) {
+    return this.doctorsService.remove(id, body.deletedById);
   }
 }

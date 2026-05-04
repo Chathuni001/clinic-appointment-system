@@ -26,7 +26,9 @@ export default function DashboardLayout({
 
   const [user, setUser] = useState<any>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [openSettings, setOpenSettings] = useState(false);
+  
+  // State to track the currently open dropdown
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -39,6 +41,23 @@ export default function DashboardLayout({
     }
   }, [router]);
 
+  // --- LOGIC: Auto-expand active menu and CLOSE others on navigation ---
+  useEffect(() => {
+    let newOpenState: Record<string, boolean> = {};
+    
+    menuItems.forEach((item) => {
+      if (item.children) {
+        const isChildActive = item.children.some((child) => child.path === pathname);
+        if (isChildActive) {
+          // If we found the active child, this is the ONLY menu we want open
+          newOpenState = { [item.name]: true };
+        }
+      }
+    });
+
+    setOpenMenus(newOpenState);
+  }, [pathname]); 
+
   const handleLogout = () => {
     localStorage.clear();
     router.push("/admin/login");
@@ -47,7 +66,14 @@ export default function DashboardLayout({
   const menuItems = [
     { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Appointments", path: "", icon: Calendar },
-    { name: "Doctors", path: "/admin/dashboard/doctors", icon: Stethoscope },
+    {
+      name: "Medical Staff",
+      icon: Stethoscope,
+      children: [
+        { name: "Doctors", path: "/admin/dashboard/doctors" },
+        { name: "Specialties", path: "/admin/dashboard/specialty" },
+      ],
+    },
     { name: "Patients", path: "", icon: HeartPulse },
     { name: "Users", path: "", icon: Users },
     {
@@ -111,12 +137,16 @@ export default function DashboardLayout({
           {menuItems.map((item) => {
             const Icon = item.icon;
 
-            // SETTINGS DROPDOWN
             if (item.children) {
+              const isOpen = openMenus[item.name];
+
               return (
                 <div key={item.name}>
                   <button
-                    onClick={() => setOpenSettings(!openSettings)}
+                    // FIXED: This now closes other menus when you click to open one
+                    onClick={() => 
+                      setOpenMenus(isOpen ? {} : { [item.name]: true })
+                    }
                     className="flex items-center justify-between w-full px-4 py-4 rounded-2xl font-semibold text-slate-300 hover:bg-white/10 hover:text-white transition-all"
                   >
                     <div className="flex items-center gap-4">
@@ -126,12 +156,12 @@ export default function DashboardLayout({
                     <ChevronDown
                       size={16}
                       className={`transition-transform ${
-                        openSettings ? "rotate-180" : ""
+                        isOpen ? "rotate-180" : ""
                       }`}
                     />
                   </button>
 
-                  {openSettings && (
+                  {isOpen && (
                     <div className="ml-10 mt-2 space-y-2">
                       {item.children.map((sub) => {
                         const isActive = pathname === sub.path;
@@ -163,7 +193,11 @@ export default function DashboardLayout({
               <Link
                 key={item.name}
                 href={item.path}
-                onClick={() => setMobileOpen(false)}
+                onClick={() => {
+                  setMobileOpen(false);
+                  // Close any dropdowns when clicking a direct link
+                  setOpenMenus({});
+                }}
                 className={`flex items-center gap-4 px-4 py-4 rounded-2xl font-semibold transition-all ${
                   isActive
                     ? "bg-[#289276] text-white shadow-lg shadow-teal-900/20"
@@ -192,7 +226,6 @@ export default function DashboardLayout({
       <main className="flex-1 md:ml-64">
         {/* HEADER */}
         <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 md:px-10 sticky top-0 z-10">
-          {/* hamburger */}
           <button
             className="md:hidden text-[#093461]"
             onClick={() => setMobileOpen(true)}
