@@ -323,7 +323,7 @@ export default function SpecialtyPage() {
                           <Search size={32} />
                         </div>
                         <p className="text-slate-500 font-bold">
-                          No results matching "{searchQuery}"
+                          No results matching
                         </p>
                       </div>
                     </td>

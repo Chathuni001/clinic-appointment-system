@@ -60,3 +60,6 @@
     nest generate module auth
     nest generate service auth
     nest generate controller auth
+
+# Upload an image
+    1. Rin in backend -> npm install -D @types/multer
