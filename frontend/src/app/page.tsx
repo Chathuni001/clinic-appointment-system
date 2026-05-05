@@ -2,11 +2,19 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { User } from "lucide-react";
+
+type Speciality = {
+  id: number;
+  name: string;
+};
 
 type Doctor = {
   id: number;
   name: string;
-  specialty: string;
+  image: string | null;
+  specialtyId: number;
+  specialty: Speciality | null;
 };
 
 export default function HomePage() {
@@ -14,6 +22,25 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   // State for mobile menu
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
+  const resolveImageUrl = (img?: string | null) => {
+    if (!img) return null;
+
+    // normalize Windows paths -> URL paths
+    const normalized = img.replace(/\\/g, "/");
+
+    // if already absolute
+    if (normalized.startsWith("http://") || normalized.startsWith("https://")) {
+      return normalized;
+    }
+
+    // join safely
+    const base = apiUrl.replace(/\/$/, "");
+    const path = normalized.startsWith("/") ? normalized : `/${normalized}`;
+    return `${base}${path}`;
+  };
 
   useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -198,7 +225,7 @@ export default function HomePage() {
 
       {/* --- DOCTORS GRID --- */}
       <main id="doctors" className="max-w-7xl mx-auto px-4 py-16 md:py-24">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
             <h2 className="text-3xl font-bold text-[#093461]">
               Available Specialists
@@ -220,39 +247,36 @@ export default function HomePage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10">
             {doctors.map((doctor) => (
               <div
                 key={doctor.id}
                 className="group bg-white border border-slate-100 rounded-[2rem] p-6 md:p-8 hover:shadow-2xl hover:border-[#289276]/20 transition-all duration-500 relative overflow-hidden"
               >
                 <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#289276]/5 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-                <div className="w-16 h-16 bg-[#F1F5F9] rounded-2xl flex items-center justify-center mb-6 group-hover:bg-[#289276] transition-colors duration-300">
-                  <svg
-                    className="w-8 h-8 text-[#093461] group-hover:text-white transition-colors"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="1.5"
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
-                </div>
+                  <div className="relative w-full h-48 rounded-3xl overflow-hidden mb-4 bg-slate-100 border-2 border-white shadow-sm flex items-center justify-center">
+                    {(() => {
+                      const imgSrc = resolveImageUrl(doctor.image);
+                      return imgSrc ? (
+                        <Image
+                          src={imgSrc}
+                          alt={doctor.name}
+                          fill
+                          className="object-cover group-hover:scale-110 transition-transform duration-700"
+                          unoptimized
+                        />
+                      ) : (
+                        <User size={64} className="text-slate-200" />
+                      );
+                    })()}
+                  </div>
                 <h3 className="text-2xl font-bold text-[#093461] mb-2">
                   {doctor.name}
                 </h3>
-                <p className="text-[#289276] font-bold text-sm mb-6 uppercase tracking-widest">
-                  {doctor.specialty}
+                <p className="text-[#289276] font-bold text-sm mb-3 uppercase tracking-widest">
+                  {doctor.specialty?.name}
                 </p>
-                <div className="border-t border-slate-100 pt-6 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs text-slate-400 font-bold uppercase tracking-tighter">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    Available Today
-                  </div>
+                <div className=" pt-3 flex items-center justify-end">
                   <button className="bg-[#093461] text-white text-sm px-6 py-3 rounded-xl font-bold hover:bg-[#289276] transition-all shadow-md active:scale-95">
                     Book Now
                   </button>
