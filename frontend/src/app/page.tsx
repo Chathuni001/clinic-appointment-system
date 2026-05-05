@@ -247,14 +247,14 @@ export default function HomePage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
             {doctors.map((doctor) => (
               <div
                 key={doctor.id}
                 className="group bg-white border border-slate-100 rounded-[2rem] p-6 md:p-8 hover:shadow-2xl hover:border-[#289276]/20 transition-all duration-500 relative overflow-hidden"
               >
                 <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#289276]/5 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-                  <div className="relative w-full h-48 rounded-3xl overflow-hidden mb-4 bg-slate-100 border-2 border-white shadow-sm flex items-center justify-center">
+                  <div className="relative w-full h-64 rounded-3xl overflow-hidden mb-4 bg-slate-100 border-2 border-white shadow-sm flex items-center justify-center">
                     {(() => {
                       const imgSrc = resolveImageUrl(doctor.image);
                       return imgSrc ? (

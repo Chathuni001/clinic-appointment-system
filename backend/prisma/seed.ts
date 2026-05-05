@@ -43,16 +43,25 @@ async function main() {
       { 
         name: 'Dr. Sarah Johnson', 
         specialtyId: cardio.id, 
+        image: 'uploads/1777888627866-860791945.png', 
         createdById: admin.id 
       },
       { 
         name: 'Dr. Michael Chen', 
         specialtyId: neuro.id, 
+        image: 'uploads/1777888627866-860791944.png',
         createdById: admin.id 
       },
       { 
         name: 'Dr. Emily Williams', 
         specialtyId: pedia.id, 
+        image: 'uploads/1777888627866-860791946.png',
+        createdById: admin.id 
+      },
+      { 
+        name: 'Dr. Christopher Doe', 
+        specialtyId: pedia.id, 
+        image: 'uploads/1777888627866-860791947.png',
         createdById: admin.id 
       },
     ],
