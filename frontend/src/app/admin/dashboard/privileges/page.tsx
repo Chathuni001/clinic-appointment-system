@@ -2,24 +2,37 @@
 
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
-import { Search, Pencil, Trash2, Loader2, X, ShieldCheck } from "lucide-react";
+import {
+  Search,
+  Pencil,
+  Trash2,
+  Loader2,
+  X,
+  Key,
+  FileText,
+} from "lucide-react";
 
 // --- TYPES ---
-type Role = {
+type Privilege = {
   id: number;
   name: string;
+  description: string;
 };
 
-export default function RolePage() {
-  const [roles, setRoles] = useState<Role[]>([]);
+export default function PrivilegePage() {
+  const [privileges, setPrivilege] = useState<Privilege[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [fieldError, setFieldError] = useState<string>("");
+  const [fieldNameError, setFieldNameError] = useState<string>("");
+  const [fieldDescriptionError, setFieldDescriptionError] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editingrole, seteditingRole] = useState<Role | null>(null);
+  const [editingpriilege, seteditingPrivileges] = useState<Privilege | null>(
+    null
+  );
 
   // Form States
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
   // const [successMsg, setSuccessMsg] = useState("");
 
@@ -29,10 +42,10 @@ export default function RolePage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Adjusted to /role to match backend controller
-      const res = await fetch(`${apiUrl}/roles`);
+      // Adjusted to /privilege to match backend controller
+      const res = await fetch(`${apiUrl}/privileges`);
       const specData = await res.json();
-      setRoles(Array.isArray(specData) ? specData : []);
+      setPrivilege(Array.isArray(specData) ? specData : []);
     } catch (err) {
       console.error("Error fetching data:", err);
     } finally {
@@ -45,35 +58,52 @@ export default function RolePage() {
   }, []);
 
   // --- SEARCH LOGIC ---
-  const filteredRole = roles.filter((spec) =>
-    spec.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredPrivileges = privileges.filter(
+    (spec) =>
+      spec.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      spec.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // --- FORM HANDLERS ---
   const resetForm = () => {
     setName("");
-    seteditingRole(null);
+    setDescription("");
+    seteditingPrivileges(null);
     setShowModal(false);
-    setFieldError("");
+    setFieldNameError("");
+    setFieldDescriptionError("");
   };
 
-  const handleEdit = (role: Role) => {
-    seteditingRole(role);
-    setName(role.name);
+  const handleEdit = (privilege: Privilege) => {
+    seteditingPrivileges(privilege);
+    setName(privilege.name);
+    setDescription(privilege.description);
     setShowModal(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFieldError(""); // Clear previous errors on new submit
+    setFieldNameError(""); // Clear previous errors on new submit
+    setFieldDescriptionError("");
 
     const trimmedName = name.trim();
 
+    const trimmedDescription = description.trim();
+
     // Client-side validation
+    let hasError = false;
+
     if (!trimmedName) {
-      setFieldError("Role name is required and cannot be empty.");
-      return;
+      setFieldNameError("Privilege name is required.");
+      hasError = true;
     }
+
+    if (!trimmedDescription) {
+      setFieldDescriptionError("Privilege description is required.");
+      hasError = true;
+    }
+
+    if (hasError) return;
 
     // ---  Get logged in user ID ---
     const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
@@ -81,17 +111,18 @@ export default function RolePage() {
 
     setSubmitting(true);
     try {
-      const method = editingrole ? "PUT" : "POST";
-      const url = editingrole
-        ? `${apiUrl}/roles/${editingrole.id}`
-        : `${apiUrl}/roles`;
+      const method = editingpriilege ? "PUT" : "POST";
+      const url = editingpriilege
+        ? `${apiUrl}/privileges/${editingpriilege.id}`
+        : `${apiUrl}/privileges`;
 
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: trimmedName,
-          [editingrole ? "updatedById" : "createdById"]: userId,
+          description: trimmedDescription,
+          [editingpriilege ? "updatedById" : "createdById"]: userId,
         }),
       });
 
@@ -101,8 +132,15 @@ export default function RolePage() {
 
         // If backend sends 400 or 409, show error UNDER the input
         if (res.status === 400 || res.status === 409) {
-          setFieldError(errMsg);
-          return; // Stop here, do NOT show SweetAlert
+          if (errMsg.toLowerCase().includes("name")) {
+            setFieldNameError(errMsg);
+          } else if (errMsg.toLowerCase().includes("description")) {
+            setFieldDescriptionError(errMsg);
+          } else {
+            // fallback (rare case)
+            setFieldNameError(errMsg);
+          }
+          return;
         }
 
         // For 500 errors or network issues, throw to catch block
@@ -111,10 +149,10 @@ export default function RolePage() {
 
       // Success SweetAlert
       await Swal.fire({
-        title: editingrole ? "Updated!" : "Created!",
-        text: editingrole
-          ? "role has been updated successfully."
-          : "New role has been created successfully.",
+        title: editingpriilege ? "Updated!" : "Created!",
+        text: editingpriilege
+          ? "Privilege has been updated successfully."
+          : "New Privilege has been created successfully.",
         icon: "success",
         confirmButtonColor: "#289276",
         timer: 2000,
@@ -138,8 +176,8 @@ export default function RolePage() {
 
   const handleDelete = async (id: number) => {
     const result = await Swal.fire({
-      title: '<span style="color: #093461;">REMOVE ROLE?</span>',
-      text: "This will permanently remove the role.",
+      title: '<span style="color: #093461;">REMOVE PRIVILEGE?</span>',
+      text: "This will permanently remove the privilege.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes, Delete it",
@@ -160,7 +198,7 @@ export default function RolePage() {
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         const userId = storedUser.id;
 
-        const res = await fetch(`${apiUrl}/roles/${id}`, {
+        const res = await fetch(`${apiUrl}/privileges/${id}`, {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ deletedById: userId }),
@@ -205,10 +243,11 @@ export default function RolePage() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
           <h1 className="text-3xl font-bold text-[#093461] tracking-tight uppercase">
-            Role Management
+            Privilege Management
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Define user roles and manage access permissions across the system
+            Define system actions and control what users are allowed to do
+            across different modules
           </p>
         </div>
         <button
@@ -218,8 +257,8 @@ export default function RolePage() {
           }}
           className="bg-[#289276] hover:bg-[#217a63] text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-emerald-900/10 active:scale-95 flex items-center gap-2 w-fit"
         >
-          <ShieldCheck size={18} />
-          <span>Add New Role</span>
+          <Key size={18} />
+          <span>Add New Privilege</span>
         </button>
       </div>
 
@@ -232,15 +271,15 @@ export default function RolePage() {
           />
           <input
             type="text"
-            placeholder="Search by role..."
+            placeholder="Search by name or description..."
             className="w-full pl-14 pr-6 py-3 rounded-2xl bg-white border border-slate-200 focus:border-[#289276] focus:ring-4 focus:ring-emerald-500/5 outline-none transition-all text-[#093461] shadow-sm"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         <div className="flex items-center gap-3 px-6 py-3 bg-white rounded-2xl border border-slate-200 text-[#093461] text-sm font-bold shadow-sm">
-          <ShieldCheck size={18} className="text-[#289276]" />
-          <span>Total Roles: {roles.length}</span>
+          <Key size={18} className="text-[#289276]" />
+          <span>Total privileges: {privileges.length}</span>
         </div>
       </div>
 
@@ -252,7 +291,7 @@ export default function RolePage() {
             <div className="py-32 flex flex-col items-center justify-center gap-4">
               <Loader2 className="animate-spin text-[#289276]" size={40} />
               <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">
-                Fetching role Management...
+                Fetching Privilege Management...
               </p>
             </div>
           ) : (
@@ -266,36 +305,44 @@ export default function RolePage() {
                   <th className="py-3 px-8 text-[11px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
                     Name
                   </th>
+                  <th className="py-3 px-8 text-[11px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    Description
+                  </th>
                   <th className="py-3 px-8 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right border-b border-slate-100">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 ">
-                {filteredRole.length > 0 ? (
-                  filteredRole.map((role, index) => (
+                {filteredPrivileges.length > 0 ? (
+                  filteredPrivileges.map((privilege, index) => (
                     <tr
-                      key={role.id}
+                      key={privilege.id}
                       className="hover:bg-slate-50/50 transition-colors group"
                     >
                       <td className="py-2 px-8 text-sm font-bold text-slate-400">
                         {(index + 1).toString().padStart(2, "0")}
                       </td>
                       <td className="py-2 px-8">
-                        <span className="block text-[#093461] text-md font-bold leading-tight group-hover:text-[#289276] transition-colors">
-                          {role.name}
+                        <span className="block text-[#093461] text-sm font-bold leading-tight group-hover:text-[#289276] transition-colors">
+                          {privilege.name}
+                        </span>
+                      </td>
+                      <td className="py-2 px-8">
+                        <span className="block text-[#093461] text-xs leading-tight group-hover:text-[#289276] transition-colors">
+                          {privilege.description}
                         </span>
                       </td>
                       <td className="py-2 px-8 text-right">
                         <div className="flex justify-end gap-2">
                           <button
-                            onClick={() => handleEdit(role)}
+                            onClick={() => handleEdit(privilege)}
                             className="p-2.5 text-slate-400 hover:text-yellow-500 hover:bg-yellow-50 rounded-xl transition-all"
                           >
                             <Pencil size={18} />
                           </button>
                           <button
-                            onClick={() => handleDelete(role.id)}
+                            onClick={() => handleDelete(privilege.id)}
                             className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
                           >
                             <Trash2 size={18} />
@@ -338,7 +385,7 @@ export default function RolePage() {
             <div className="flex items-center gap-5 mb-3">
               <div>
                 <h2 className="text-xl font-bold text-[#093461] leading-none uppercase">
-                  {editingrole ? "Update role" : "Create role"}
+                  {editingpriilege ? "Update privilege" : "Create privilege"}
                 </h2>
               </div>
             </div>
@@ -346,12 +393,12 @@ export default function RolePage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-[11px] font-black text-slate-400 uppercase ml-1 tracking-widest">
-                  role Name
+                  Privilege Name
                 </label>
                 <div className="relative">
-                  <ShieldCheck
+                  <Key
                     className={`absolute left-5 top-1/2 -translate-y-1/2 transition-colors ${
-                      fieldError ? "text-red-400" : "text-slate-300"
+                      fieldNameError ? "text-red-400" : "text-slate-300"
                     }`}
                     size={18}
                   />
@@ -360,12 +407,12 @@ export default function RolePage() {
                     value={name}
                     onChange={(e) => {
                       setName(e.target.value);
-                      if (fieldError) setFieldError("");
+                      if (fieldNameError) setFieldNameError("");
                     }}
-                    placeholder="Administrator"
+                    placeholder="Manage Doctors"
                     // Dynamic classes for red border on error
                     className={`w-full pl-14 pr-6 py-3 rounded-2xl bg-slate-50 border outline-none transition-all font-bold text-[#093461] ${
-                      fieldError
+                      fieldNameError
                         ? "border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
                         : "border-slate-200 focus:border-[#289276] focus:ring-4 focus:ring-emerald-500/5"
                     }`}
@@ -373,9 +420,48 @@ export default function RolePage() {
                 </div>
 
                 {/* Inline Error Message */}
-                {fieldError && (
+                {fieldNameError && (
                   <p className="text-red-500 text-xs font-bold ml-1 flex items-center gap-1 animate-in slide-in-from-top-1 duration-200">
-                    {fieldError}
+                    {fieldNameError}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[11px] font-black text-slate-400 uppercase ml-1 tracking-widest">
+                  Privilege Description
+                </label>
+
+                <div className="relative">
+                  {/* Icon */}
+                  <FileText
+                    className={`absolute left-5 top-4 transition-colors ${
+                      fieldDescriptionError ? "text-red-400" : "text-slate-300"
+                    }`}
+                    size={18}
+                  />
+
+                  {/* Textarea */}
+                  <textarea
+                    value={description}
+                    onChange={(e) => {
+                      setDescription(e.target.value);
+                      if (fieldDescriptionError) setFieldDescriptionError("");
+                    }}
+                    placeholder="Enter privilege description..."
+                    rows={1}
+                    className={`w-full pl-14 pr-6 py-3 rounded-2xl bg-slate-50 border outline-none transition-all text-[#093461] resize-none ${
+                      fieldDescriptionError
+                        ? "border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
+                        : "border-slate-200 focus:border-[#289276] focus:ring-4 focus:ring-emerald-500/5"
+                    }`}
+                  />
+                </div>
+
+                {/* Inline Error Message */}
+                {fieldDescriptionError && (
+                  <p className="text-red-500 text-xs font-semibold ml-1 flex items-center gap-1 animate-in slide-in-from-top-1 duration-200">
+                    {fieldDescriptionError}
                   </p>
                 )}
               </div>
@@ -389,7 +475,7 @@ export default function RolePage() {
                   {submitting ? (
                     <Loader2 className="animate-spin" size={20} />
                   ) : (
-                    <>Save role</>
+                    <>Save Privilege</>
                   )}
                 </button>
               </div>

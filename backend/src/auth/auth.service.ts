@@ -11,23 +11,25 @@ export class AuthService {
   ) {}
 
   async signIn(username: string, pass: string) {
-    // 1. Find the user
+    // 1. Fetch user
     const user = await this.usersService.findOneToLogin(username);
 
-    // 2. If user doesn't exist, throw error immediately
-    // This tells TypeScript: if we move past this line, 'user' DEFINITELY exists.
+    // 2. Guard: User exists?
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // 3. Compare hashed passwords
+    // 3. Guard: Password matches?
     const isMatch = await bcrypt.compare(pass, user.password);
-
     if (!isMatch) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // 4. Now TypeScript knows 'user' is not null, so this is safe:
+    // 4. Map Privileges correctly based on your schema names
+    // We go: user -> role -> rolePrivileges[] -> privilege -> name
+    const privileges = user.role?.rolePrivileges.map((rp) => rp.privilege.name) || [];
+
+    // 5. Generate Token
     const payload = { sub: user.id, username: user.username };
     
     return {
@@ -36,12 +38,11 @@ export class AuthService {
         id: user.id,
         name: user.name,
         image: user.image,
-        roleId: user.roleId,
-  
         role: {
           name: user.role?.name,
         },
+        privileges: privileges, // Example: ["CREATE_DOCTOR", "DELETE_USER"]
       },
     };
-  } 
+  }
 }

@@ -81,6 +81,7 @@ export default function DashboardLayout({
       icon: Settings,
       children: [
         { name: "Role", path: "/admin/dashboard/roles" },
+        { name: "Privileges", path: "/admin/dashboard/privileges" },
         { name: "Clinic Settings", path: "/admin/settings/clinic" },
       ],
     },

@@ -7,37 +7,66 @@ async function main() {
   console.log('Cleaning up database...');
   // Note: Using the exact model names from your schema
   await prisma.$executeRawUnsafe(`
-    TRUNCATE TABLE "Role", "User", "Doctor", "Specialty", "Appointment"
+    TRUNCATE TABLE "Privilege", "Role", "RolePrivilege", "User", "Doctor", "Specialty", "Appointment"
     RESTART IDENTITY CASCADE;
   `);
 
-  // 1. Create System Admin Role
+  const privileges = [
+    { name: 'MANAGE PRIVILEGE', description: 'Can create, edit and delete privileges' },
+    { name: 'MANAGE Role', description: 'Can create, edit and delete role' },
+    { name: 'MANAGE DOCTORS', description: 'Can create, edit and delete doctors' },
+    { name: 'MANAGE APPOINTMENTS', description: 'Can view and cancel appointments' },
+    { name: 'MANAGE USERS', description: 'Can manage admin users and roles' },
+  ];
+
+  for (const p of privileges) {
+    await prisma.privilege.upsert({
+      where: { name: p.name },
+      update: {},
+      create: p,
+    });
+  }
+
+  // Create System Admin Role
   const role = await prisma.role.create({
     data: {
-      name: 'SYSTEM ADMINISTRATOR'
+      name: 'System Administrator'
     }
   });
 
-  // 2. Create Admin User
+  const adminRole = await prisma.role.findUnique({ where: { name: 'System Administrator' } });
+
+  if (adminRole) {
+    const allPrivs = await prisma.privilege.findMany();
+    for (const p of allPrivs) {
+      await prisma.rolePrivilege.upsert({
+        where: { roleId_privilegeId: { roleId: adminRole.id, privilegeId: p.id } },
+        update: {},
+        create: { roleId: adminRole.id, privilegeId: p.id },
+      });
+    }
+  }
+
+  // Create Admin User
   const hashedPassword = await bcrypt.hash('admin123', 10);
   const admin = await prisma.user.create({
     data: {
-      name: 'System Administrator',
+      name: 'Nikini Mandakini',
       username: 'admin',
       password: hashedPassword,
       roleId: role.id,
     },
   });
 
-  // 3. Create Specialities
-  // We create them individually or capture the IDs to link them to doctors
+
+
+  // Create Specialities
   const cardio = await prisma.specialty.create({ data: { name: 'Cardiologist', createdById: admin.id } });
   const derm = await prisma.specialty.create({ data: { name: 'Dermatologist', createdById: admin.id } });
   const pedia = await prisma.specialty.create({ data: { name: 'Pediatrician', createdById: admin.id } });
   const neuro = await prisma.specialty.create({ data: { name: 'Neurologist', createdById: admin.id } });
 
-  // 4. Create Doctors
-  // Now we use the specific IDs from the specialities created above
+  // Create Doctors
   await prisma.doctor.createMany({
     data: [
       { 
@@ -60,7 +89,7 @@ async function main() {
       },
       { 
         name: 'Dr. Christopher Doe', 
-        specialtyId: pedia.id, 
+        specialtyId: derm.id, 
         image: 'uploads/1777888627866-860791947.png',
         createdById: admin.id 
       },

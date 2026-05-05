@@ -113,4 +113,21 @@ export class RolesService {
       },
     });
   }
+
+  async assignPrivileges(roleId: number, privilegeIds: number[]) {
+    // 1. Delete old privileges for this role
+    await this.prisma.rolePrivilege.deleteMany({
+      where: { roleId },
+    });
+  
+    // 2. Assign new ones
+    const data = privilegeIds.map((pId) => ({
+      roleId,
+      privilegeId: pId,
+    }));
+  
+    return this.prisma.rolePrivilege.createMany({
+      data,
+    });
+  }
 }

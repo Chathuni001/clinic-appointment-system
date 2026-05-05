@@ -8,6 +8,29 @@ datasource db {
 }
 
 /////////////////////////////////////////////////////
+// PRIVILEGE MODEL
+/////////////////////////////////////////////////////
+model Privilege {
+  id          Int             @id @default(autoincrement())
+  name        String          @unique // e.g., "CREATE_DOCTOR", "DELETE_USER"
+  description String?         // What this privilege does
+  roles       RolePrivilege[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  // Audit
+  createdById Int?
+  updatedById Int?
+  deletedById Int?
+
+  createdBy   User? @relation("PrivilegeCreatedBy", fields: [createdById], references: [id])
+  updatedBy User? @relation("PrivilegeUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy User? @relation("PrivilegeDeletedBy", fields: [deletedById], references: [id])
+}
+
+/////////////////////////////////////////////////////
 // ROLE MODEL
 /////////////////////////////////////////////////////
 model Role {
@@ -28,6 +51,19 @@ model Role {
 
   // Users in this role
   users User[]
+  rolePrivileges RolePrivilege[] 
+}
+
+/////////////////////////////////////////////////////
+// ROLE-PRIVILEGE MODEL
+/////////////////////////////////////////////////////
+model RolePrivilege {
+  roleId      Int
+  privilegeId Int
+  role        Role      @relation(fields: [roleId], references: [id])
+  privilege   Privilege @relation(fields: [privilegeId], references: [id])
+
+  @@id([roleId, privilegeId]) // Composite primary key
 }
 
 /////////////////////////////////////////////////////
@@ -60,6 +96,12 @@ model User {
   createdUsers User[] @relation("UserCreatedBy")
   updatedUsers User[] @relation("UserUpdatedBy")
   deletedUsers User[] @relation("UserDeletedBy")
+
+// Reverse relations for Privilege auditing
+  createdPrivileges Privilege[] @relation("PrivilegeCreatedBy")
+  updatedPrivileges Privilege[] @relation("PrivilegeUpdatedBy")
+  deletedPrivileges Privilege[] @relation("PrivilegeDeletedBy")
+
 
   // Reverse relations for Role auditing
   createdRoles Role[] @relation("RoleCreatedBy")

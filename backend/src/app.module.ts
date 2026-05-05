@@ -8,9 +8,10 @@ import { RolesController } from './roles/roles.controller';
 import { RolesModule } from './roles/roles.module';
 import { AuthModule } from './auth/auth.module';
 import { SpecialtyModule } from './specialty/specialty.module';
+import { PrivilegesModule } from './privileges/privileges.module';
 
 @Module({
-  imports: [PrismaModule, DoctorsModule, UsersModule, RolesModule, AuthModule, SpecialtyModule],
+  imports: [PrismaModule, DoctorsModule, UsersModule, RolesModule, AuthModule, SpecialtyModule, PrivilegesModule],
   controllers: [AppController, RolesController],
   providers: [AppService],
 })
